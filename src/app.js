@@ -5,36 +5,42 @@ const port = 3003;
 const hostname = "127.0.0.1";
 
 const server = http.createServer((request, response) => {
-  const url = new URL(request.url, `http://${hostname}`);
-  const params = url.searchParams;
+  const urlObject = new URL(request.url, `http://${hostname}`);
 
-  if (params.toString !== "") {
-    if (params.has("hello")) {
-      const name = params.get("hello");
-      if (name) {
-        response.statusCode = 200;
-        response.setHeader("Content-Type", "text/plain");
-        response.end(`Hello, ${name}`);
-        return;
-      } else {
-        response.statusCode = 400;
-        response.setHeader("Content-Type", "text/plain");
-        response.end("Enter a name");
-        return;
-      }
-    }
+  if (urlObject.pathname === "/" && urlObject.searchParams.has("hello")) {
+    const name = urlObject.searchParams.get("hello");
 
-    if (url.pathname === "/users") {
-      response.statusCode = 200;
-      response.setHeader("Content-Type", "application/json");
-      response.write(getUsers());
-      return;
-    } else {
+    if (name) {
       response.statusCode = 200;
       response.setHeader("Content-Type", "text/plain");
-      response.end("Hello,world!");
-      return;
+      response.end(`Hello, ${name}!`);
+    } else {
+      response.statusCode = 400;
+      response.setHeader("Content-Type", "text/plain");
+      response.end("Enter a name");
     }
+    for (const key of urlObject.searchParams.keys()) {
+      if (key !== "hello") {
+        response.statusCode = 500;
+        response.end();
+      }
+    }
+  } else if (urlObject.pathname === "/users") {
+    try {
+      const usersData = getUsers();
+
+      response.statusCode = 200;
+      response.setHeader("Content-Type", "application/json");
+      response.end(JSON.stringify(usersData));
+    } catch (err) {
+      response.statusCode = 500;
+      response.setHeader("Content-Type", "text/plain");
+      response.end("Internal Server Error");
+    }
+  } else if (urlObject.search === "") {
+    response.statusCode = 200;
+    response.setHeader("Content-Type", "text/plain");
+    response.end("Hello, World!");
   } else {
     response.statusCode = 500;
     response.end();
