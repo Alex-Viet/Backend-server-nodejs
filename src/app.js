@@ -5,7 +5,7 @@ const port = 3003;
 const hostname = "127.0.0.1";
 
 const server = http.createServer((request, response) => {
-  const urlObject = new URL(request.url, `http://${hostname}:${port}`);
+  const urlObject = new URL(request.url, `http://${hostname}`);
 
   if (urlObject.pathname === "/" && urlObject.searchParams.has("hello")) {
     const name = urlObject.searchParams.get("hello");
@@ -19,6 +19,12 @@ const server = http.createServer((request, response) => {
       response.setHeader("Content-Type", "text/plain");
       response.end("Enter a name");
     }
+    for (const key of urlObject.searchParams.keys()) {
+      if (key !== "hello") {
+        response.statusCode = 500;
+        response.end();
+      }
+    }
   } else if (urlObject.pathname === "/users") {
     try {
       const usersData = getUsers();
@@ -31,7 +37,7 @@ const server = http.createServer((request, response) => {
       response.setHeader("Content-Type", "text/plain");
       response.end("Internal Server Error");
     }
-  } else if (urlObject.pathname === "/") {
+  } else if (urlObject.search === "") {
     response.statusCode = 200;
     response.setHeader("Content-Type", "text/plain");
     response.end("Hello, World!");
